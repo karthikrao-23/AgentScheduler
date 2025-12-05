@@ -1,0 +1,8 @@
+#CustomerName, AverageCallDurationSeconds, StartTimeET, EndTimeET, NumberOfCalls, Priority
+East Coast Hospital, 300, 9AM, 5PM, 10000, 1
+East Coast Clinic, 240, 8AM, 4PM, 5000, 2
+#CustomerName, AverageCallDurationSeconds, StartTimePT, EndTimePT, NumberOfCalls, Priority
+West Coast Hospital, 300, 9AM, 5PM, 8000, 1
+West Coast Clinic, 240, 10AM, 6PM, 6000, 2
+#CustomerName, AverageCallDurationSeconds, StartTimeCT, EndTimeCT, NumberOfCalls, Priority
+Central Hospital, 360, 8AM, 6PM, 12000, 1

@@ -1,0 +1,7 @@
+#CustomerName, AverageCallDurationSeconds, StartTimeET, EndTimeET, NumberOfCalls, Priority
+Stanford Hospital, 300, 9AM, 7PM, 20000, 1
+VNS, 120, 6AM, 1PM, 40500, 1
+CVS, 180, 11AM, 3PM, 50000, 3
+SJC, 1200, 10AM, 12PM, 500, 4
+ANMC, 400, 7AM, 8PM, 80000, 5
+NMDX, 220, 10AM, 6PM, 40000, 3

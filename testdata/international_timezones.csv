@@ -1,0 +1,19 @@
+# US East Coast
+#CustomerName, AverageCallDurationSeconds, StartTimeET, EndTimeET, NumberOfCalls, Priority
+New York Office, 300, 9AM, 5PM, 10000, 1
+
+# UK Operations
+#CustomerName, AverageCallDurationSeconds, StartTimeEurope/London, EndTimeEurope/London, NumberOfCalls, Priority
+London Office, 240, 9AM, 5PM, 8000, 1
+
+# Japan Operations
+#CustomerName, AverageCallDurationSeconds, StartTimeAsia/Tokyo, EndTimeAsia/Tokyo, NumberOfCalls, Priority
+Tokyo Office, 360, 9AM, 6PM, 12000, 1
+
+# Australia Operations
+#CustomerName, AverageCallDurationSeconds, StartTimeAustralia/Sydney, EndTimeAustralia/Sydney, NumberOfCalls, Priority
+Sydney Office, 300, 8AM, 5PM, 9000, 2
+
+# India Operations
+#CustomerName, AverageCallDurationSeconds, StartTimeAsia/Kolkata, EndTimeAsia/Kolkata, NumberOfCalls, Priority
+Mumbai Office, 420, 10AM, 7PM, 15000, 1

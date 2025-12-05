@@ -1,0 +1,39 @@
+# Global Call Center Operations - 24/7 Coverage Example
+# This demonstrates how to schedule agents across multiple international timezones
+
+# Asia-Pacific Region - Morning Coverage (9 AM - 6 PM local time)
+#CustomerName, AverageCallDurationSeconds, StartTimeAsia/Tokyo, EndTimeAsia/Tokyo, NumberOfCalls, Priority
+Tokyo Support Center, 300, 9AM, 6PM, 15000, 1
+
+#CustomerName, AverageCallDurationSeconds, StartTimeAsia/Singapore, EndTimeAsia/Singapore, NumberOfCalls, Priority
+Singapore Hub, 240, 9AM, 6PM, 12000, 1
+
+#CustomerName, AverageCallDurationSeconds, StartTimeAustralia/Sydney, EndTimeAustralia/Sydney, NumberOfCalls, Priority
+Sydney Operations, 360, 8AM, 5PM, 10000, 2
+
+# Europe - Business Hours (9 AM - 5 PM local time)
+#CustomerName, AverageCallDurationSeconds, StartTimeEurope/London, EndTimeEurope/London, NumberOfCalls, Priority
+London Call Center, 300, 9AM, 5PM, 18000, 1
+
+#CustomerName, AverageCallDurationSeconds, StartTimeEurope/Paris, EndTimeEurope/Paris, NumberOfCalls, Priority
+Paris Support, 240, 9AM, 6PM, 8000, 2
+
+#CustomerName, AverageCallDurationSeconds, StartTimeEurope/Berlin, EndTimeEurope/Berlin, NumberOfCalls, Priority
+Berlin Office, 420, 8AM, 5PM, 9000, 1
+
+# Americas - Standard Business Hours
+#CustomerName, AverageCallDurationSeconds, StartTimeET, EndTimeET, NumberOfCalls, Priority
+New York HQ, 300, 8AM, 6PM, 25000, 1
+
+#CustomerName, AverageCallDurationSeconds, StartTimeCT, EndTimeCT, NumberOfCalls, Priority
+Chicago Branch, 360, 9AM, 5PM, 12000, 2
+
+#CustomerName, AverageCallDurationSeconds, StartTimePT, EndTimePT, NumberOfCalls, Priority
+San Francisco Office, 240, 9AM, 6PM, 15000, 1
+
+# Middle East & India
+#CustomerName, AverageCallDurationSeconds, StartTimeAsia/Dubai, EndTimeAsia/Dubai, NumberOfCalls, Priority
+Dubai Center, 300, 9AM, 6PM, 11000, 1
+
+#CustomerName, AverageCallDurationSeconds, StartTimeAsia/Kolkata, EndTimeAsia/Kolkata, NumberOfCalls, Priority
+Mumbai Operations, 420, 9AM, 8PM, 20000, 1

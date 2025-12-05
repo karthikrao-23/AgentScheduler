@@ -1,0 +1,14 @@
+# East Coast Customers (Eastern Time)
+#CustomerName, AverageCallDurationSeconds, StartTimeET, EndTimeET, NumberOfCalls, Priority
+NYC Hospital, 300, 8AM, 5PM, 15000, 1
+Boston Clinic, 240, 9AM, 6PM, 8000, 2
+
+# West Coast Customers (Pacific Time)
+#CustomerName, AverageCallDurationSeconds, StartTimePT, EndTimePT, NumberOfCalls, Priority
+LA Medical Center, 360, 8AM, 5PM, 12000, 1
+SF Health Services, 180, 10AM, 7PM, 10000, 2
+
+# Central Customers (Central Time)
+#CustomerName, AverageCallDurationSeconds, StartTimeCT, EndTimeCT, NumberOfCalls, Priority
+Chicago Hospital, 300, 7AM, 6PM, 18000, 1
+Dallas Clinic, 420, 9AM, 5PM, 9000, 3
