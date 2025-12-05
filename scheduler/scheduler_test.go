@@ -140,6 +140,72 @@ func TestGenerateSchedule(t *testing.T) {
 				15: 6,
 			},
 		},
+		"DST_SpringForward": {
+			input: []models.CallData{
+				{
+					CustomerName:               "SpringForwardTest",
+					AverageCallDurationSeconds: 3600,
+					// March 10, 2024 - DST spring forward: 1:00 AM to 4:00 AM
+					// Actual elapsed time: 2 hours (hour 2:00-2:59 doesn't exist)
+					StartTime:     time.Date(2024, 3, 10, 1, 0, 0, 0, mustLoadLocation("America/New_York")),
+					EndTime:       time.Date(2024, 3, 10, 4, 0, 0, 0, mustLoadLocation("America/New_York")),
+					Location:      mustLoadLocation("America/New_York"),
+					NumberOfCalls: 6, // 6 calls / 2 hours = 3 calls/hour
+					Priority:      1,
+				},
+			},
+			// Calls per hour = 3, Agents per hour = 3
+			// Hours scheduled: 1, 3 (hour 2 doesn't exist due to DST)
+			expected: map[int]int{
+				1: 3, // 1:00-3:00 (skips to 3:00 due to DST)
+				3: 3, // 3:00-4:00
+			},
+		},
+		"DST_FallBack": {
+			input: []models.CallData{
+				{
+					CustomerName:               "FallBackTest",
+					AverageCallDurationSeconds: 3600,
+					// November 3, 2024 - DST fall back: 12:00 AM to 3:00 AM
+					// Actual elapsed time: 4 hours (hour 1:00-1:59 repeats)
+					StartTime:     time.Date(2024, 11, 3, 0, 0, 0, 0, mustLoadLocation("America/New_York")),
+					EndTime:       time.Date(2024, 11, 3, 3, 0, 0, 0, mustLoadLocation("America/New_York")),
+					Location:      mustLoadLocation("America/New_York"),
+					NumberOfCalls: 12, // 12 calls / 4 hours = 3 calls/hour
+					Priority:      1,
+				},
+			},
+			// Calls per hour = 3, Agents per hour = 3
+			// Hours scheduled: 0, 1, 2
+			// Hour 1 occurs twice during fall back, so gets 2 hours worth of agents
+			expected: map[int]int{
+				0: 3, // 0:00-1:00
+				1: 6, // 1:00-2:00 (happens twice = 2 hours × 3 agents/hour)
+				2: 3, // 2:00-3:00
+			},
+		},
+		"DST_PartialHoursAcrossSpringForward": {
+			input: []models.CallData{
+				{
+					CustomerName:               "PartialDSTTest",
+					AverageCallDurationSeconds: 1800, // 30 min per call
+					// March 10, 2024: 1:30 AM to 3:30 AM (spans DST)
+					// Actual elapsed time: 1 hour (not 2!)
+					StartTime:     time.Date(2024, 3, 10, 1, 30, 0, 0, mustLoadLocation("America/New_York")),
+					EndTime:       time.Date(2024, 3, 10, 3, 30, 0, 0, mustLoadLocation("America/New_York")),
+					Location:      mustLoadLocation("America/New_York"),
+					NumberOfCalls: 10, // 10 calls / 1 hour = 10 calls/hour
+					Priority:      1,
+				},
+			},
+			// Hour 1: 1:30-3:00 (jumps to 3:00, actual 0.5 hours) = 5 calls = 3 agents
+			// Hour 3: 3:00-3:30 (0.5 hours) = 5 calls = 3 agents
+			expected: map[int]int{
+				1: 3, // Partial hour before DST jump
+				2: 0, // Hour 2 doesn't exist due to DST
+				3: 3, // Partial hour after DST jump
+			},
+		},
 	}
 
 	for name, tt := range tests {

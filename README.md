@@ -4,7 +4,7 @@ Agent Scheduler is a Go-based application designed to calculate and schedule age
 
 ## Features
 
--   **Multi-Timezone Support**: Handles input times in various timezones (e.g., "America/New_York", "Asia/Tokyo") and normalizes them for scheduling.
+-   **Multi-Timezone Support**: Handles input times in various timezones (e.g., "America/New_York", "Asia/Tokyo") and normalizes them for scheduling. If timezone parsing fails, it falls back to Pacific Time.
 -   **Precise Scheduling Logic**:
     -   **Hourly Boundaries**: Schedules agents at clean hourly boundaries (e.g., 9:00, 10:00) regardless of exact start/end times.
     -   **Proportional Allocation**: Correctly handles partial hours (e.g., a shift starting at 9:30 AM) by allocating agents proportional to the time worked in that hour.
@@ -17,7 +17,7 @@ Agent Scheduler is a Go-based application designed to calculate and schedule age
 
 ## Scheduling Logic
 
-The scheduler uses a sophisticated algorithm to determine agent requirements:
+The scheduler uses the following algorithm to determine agent requirements:
 
 1.  **Duration Calculation**: Calculates the total duration of the call window.
 2.  **Call Distribution**: Distributes total calls evenly across the duration to determine calls per hour.
@@ -36,7 +36,7 @@ You can use the provided `Makefile` to build, run, and test the application easi
 
 -   **Build**: `make build`
 -   **Run**: `make run` (Runs with default example data)
-    -   To run with a specific input file: `make run INPUT=testdata/my_file.csv`
+    -   To run with a specific input file: `make run INPUT=testdata/data.csv`
 -   **Test**: `make test`
 -   **Clean**: `make clean`
 

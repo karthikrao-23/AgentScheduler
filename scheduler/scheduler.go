@@ -23,6 +23,8 @@ func GenerateSchedule(data []models.CallData, utilization float64, capacityPerHo
 			end = end.Add(24 * time.Hour)
 		}
 
+		// Find the elapsed duration in hours and not use wall clock to
+		// account for DST.
 		durationHours := end.Sub(start).Hours()
 		if durationHours <= 0 {
 			continue
