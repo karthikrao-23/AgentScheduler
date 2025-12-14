@@ -14,7 +14,7 @@ Support organizations need to translate forecasted call volumes (e.g., "100 call
 
 ### 3.1 Core Components
 
-```mermaid
+```
 graph TD
     Input[CSV Input] --> Parser
     Parser -->|CallData[]| Scheduler
@@ -94,4 +94,3 @@ We utilize a **Custom Prometheus Registry** to expose business-critical data wit
 
 ## 6. Future Enhancements
 -   **Shift Optimization**: Currently generates requirements per hour. Future versions could group these into 8-hour shifts.
--   **Skill-Based Routing**: Add a `SkillTag` to requests to enforce capacity limits per skill (e.g., "Spanish Speakers" capacity vs "English").
