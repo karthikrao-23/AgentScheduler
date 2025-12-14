@@ -111,119 +111,80 @@ func GenerateSchedule(data []models.CallData, utilization float64, capacityPerHo
 	return &schedule
 }
 
-// allocateWithConstraints performs the actual allocation when capacity is exceeded
+// allocateWithConstraints performs priority-based allocation.
+// Time: O(n log n) for sort + O(n) for allocation = O(n log n)
+// Space: O(n) for output slices (no extra map overhead)
 func allocateWithConstraints(requests []models.CustomerRequirement, capacity int) ([]models.CustomerRequirement, *models.UnmetDemand) {
+	if len(requests) == 0 {
+		return nil, nil
+	}
+
+	// Calculate total demand: O(n)
 	totalDemand := 0
 	for _, req := range requests {
 		totalDemand += req.AgentsNeeded
 	}
-	// sort the requests by priority
+
+	// Fast path: if capacity exceeds demand, no allocation logic needed
+	if capacity >= totalDemand {
+		return requests, nil
+	}
+
+	// Sort by priority (1 = highest): O(n log n)
 	sort.Slice(requests, func(i, j int) bool {
 		return requests[i].Priority < requests[j].Priority
 	})
-	allocated := make([]models.CustomerRequirement, 0)
-	processedIndices := make(map[int]struct{})
-	remainingCapacity := capacity
 
-	// First pass: full allocation in priority order
-	remainingCapacity = allocateFullRequests(requests, &allocated, processedIndices, remainingCapacity)
-
-	// Second pass: partial allocation if capacity remains
+	// Pre-allocate with capacity hints to reduce reallocations
+	allocated := make([]models.CustomerRequirement, 0, len(requests))
 	impactedClients := make([]models.ImpactedClient, 0)
-	allocatePartialRequest(requests, &allocated, &impactedClients, processedIndices, remainingCapacity)
+	remaining := capacity
 
-	return allocated, recordUnmetDemands(requests, impactedClients, processedIndices, totalDemand, capacity)
-}
-
-// allocateFullRequests allocates agents to all requests that can be fully satisfied
-func allocateFullRequests(
-	requests []models.CustomerRequirement,
-	allocated *[]models.CustomerRequirement,
-	processedIndices map[int]struct{},
-	remainingCapacity int,
-) int {
-	for i, req := range requests {
-		if remainingCapacity >= req.AgentsNeeded {
-			*allocated = append(*allocated, req)
-			remainingCapacity -= req.AgentsNeeded
-			processedIndices[i] = struct{}{}
-		}
-	}
-	return remainingCapacity
-}
-
-// allocatePartialRequest gives partial allocation to highest-priority unprocessed client
-func allocatePartialRequest(
-	requests []models.CustomerRequirement,
-	allocated *[]models.CustomerRequirement,
-	impactedClients *[]models.ImpactedClient,
-	processedIndices map[int]struct{},
-	remainingCapacity int,
-) int {
-	if remainingCapacity == 0 {
-		return remainingCapacity
-	}
-
-	for i, req := range requests {
-		if _, ok := processedIndices[i]; ok {
+	// Single pass allocation: O(n)
+	for _, req := range requests {
+		if remaining <= 0 {
+			// No capacity left - fully unmet
+			impactedClients = append(impactedClients, models.ImpactedClient{
+				Name:            req.Name,
+				RequestedAgents: req.AgentsNeeded,
+				AllocatedAgents: 0,
+				UnmetAgents:     req.AgentsNeeded,
+				Priority:        req.Priority,
+			})
 			continue
 		}
 
-		*allocated = append(*allocated, models.CustomerRequirement{
-			Name:         req.Name,
-			AgentsNeeded: remainingCapacity,
-			Location:     req.Location,
-			Priority:     req.Priority,
-		})
-
-		*impactedClients = append(
-			*impactedClients,
-			models.ImpactedClient{
+		if remaining >= req.AgentsNeeded {
+			// Full allocation
+			allocated = append(allocated, req)
+			remaining -= req.AgentsNeeded
+		} else {
+			// Partial allocation - give what's left
+			allocated = append(allocated, models.CustomerRequirement{
+				Name:         req.Name,
+				AgentsNeeded: remaining,
+				Location:     req.Location,
+				Priority:     req.Priority,
+			})
+			impactedClients = append(impactedClients, models.ImpactedClient{
 				Name:            req.Name,
 				RequestedAgents: req.AgentsNeeded,
-				AllocatedAgents: remainingCapacity,
-				UnmetAgents:     req.AgentsNeeded - remainingCapacity,
+				AllocatedAgents: remaining,
+				UnmetAgents:     req.AgentsNeeded - remaining,
 				Priority:        req.Priority,
-			},
-		)
-
-		processedIndices[i] = struct{}{}
-		return 0 // All capacity used
-	}
-
-	return remainingCapacity
-}
-
-// recordUnmetDemands records all clients whose demands were not processed
-func recordUnmetDemands(
-	requests []models.CustomerRequirement,
-	impactedClients []models.ImpactedClient,
-	processedIndices map[int]struct{},
-	totalDemand int,
-	capacity int,
-) *models.UnmetDemand {
-	for i, req := range requests {
-		if _, ok := processedIndices[i]; !ok {
-			impactedClients = append(
-				impactedClients,
-				models.ImpactedClient{
-					Name:            req.Name,
-					RequestedAgents: req.AgentsNeeded,
-					AllocatedAgents: 0,
-					UnmetAgents:     req.AgentsNeeded,
-					Priority:        req.Priority,
-				},
-			)
+			})
+			remaining = 0
 		}
 	}
 
+	// Only create UnmetDemand if there are impacted clients
 	if len(impactedClients) > 0 {
-		return &models.UnmetDemand{
+		return allocated, &models.UnmetDemand{
 			TotalDemand:     totalDemand,
 			AllocatedAgents: capacity,
 			UnmetAgents:     totalDemand - capacity,
 			ImpactedClients: impactedClients,
 		}
 	}
-	return nil
+	return allocated, nil
 }

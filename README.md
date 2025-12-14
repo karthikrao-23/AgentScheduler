@@ -4,7 +4,6 @@ Agent Scheduler is a Go-based application designed to calculate and schedule age
 
 ## Features
 
--   **Multi-Timezone Support**: Handles input times in various timezones (e.g., "America/New_York", "Asia/Tokyo") and normalizes them for scheduling. If timezone parsing fails, it falls back to Pacific Time.
 -   **Precise Scheduling Logic**:
     -   **Hourly Boundaries**: Schedules agents at clean hourly boundaries (e.g., 9:00, 10:00) regardless of exact start/end times.
     -   **Proportional Allocation**: Correctly handles partial hours (e.g., a shift starting at 9:30 AM) by allocating agents proportional to the time worked in that hour.
@@ -13,6 +12,7 @@ Agent Scheduler is a Go-based application designed to calculate and schedule age
     -   **Priority-Based Allocation**: When demand exceeds capacity, agents are allocated to higher-priority customers first.
     -   **Unmet Demand Tracking**: Detailed reporting of unmet demand and impacted clients when capacity is limited.
 -   **Utilization Adjustments**: Supports a utilization multiplier (0-1) to adjust agent requirements based on expected efficiency.
+-   **Multi-Timezone Support**: Handles input times in various timezones (e.g., "America/New_York", "Asia/Tokyo") and normalizes them for scheduling. If timezone parsing fails, it falls back to Pacific Time.
 -   **Multiple Output Formats**: Generates schedules in Text, JSON, or CSV formats.
 
 ## Scheduling Logic
