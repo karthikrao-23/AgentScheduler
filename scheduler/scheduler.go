@@ -1,7 +1,9 @@
 package scheduler
 
 import (
+	"agent-scheduler/metrics"
 	"agent-scheduler/models"
+	"fmt"
 	"math"
 	"sort"
 	"time"
@@ -9,6 +11,16 @@ import (
 
 // GenerateSchedule calculates the number of agents needed per hour for each customer.
 func GenerateSchedule(data []models.CallData, utilization float64, capacityPerHour int) *models.Schedule {
+	// Reset and track metrics
+	metrics.ResetSchedulerGauges()
+	start := time.Now()
+	defer func() {
+		metrics.SchedulerDurationSeconds.Observe(time.Since(start).Seconds())
+	}()
+
+	// Track customers processed
+	metrics.SchedulerCustomersProcessed.Observe(float64(len(data)))
+
 	hourlyRequests := make([][]models.CustomerRequirement, 24)
 	for h := range 24 {
 		hourlyRequests[h] = make([]models.CustomerRequirement, 0)
@@ -107,6 +119,8 @@ func GenerateSchedule(data []models.CallData, utilization float64, capacityPerHo
 			}
 		}
 	}
+	// Compute final metrics from schedule
+	computeScheduleMetrics(&schedule)
 
 	return &schedule
 }
@@ -127,6 +141,12 @@ func allocateWithConstraints(requests []models.CustomerRequirement, capacity int
 
 	// Fast path: if capacity exceeds demand, no allocation logic needed
 	if capacity >= totalDemand {
+		// Track high priority satisfaction for requests that are fully met
+		for _, req := range requests {
+			if req.Priority == 1 {
+				metrics.HighPriorityFullySatisfied.Inc()
+			}
+		}
 		return requests, nil
 	}
 
@@ -151,6 +171,10 @@ func allocateWithConstraints(requests []models.CustomerRequirement, capacity int
 				UnmetAgents:     req.AgentsNeeded,
 				Priority:        req.Priority,
 			})
+			// Track high priority failures
+			if req.Priority == 1 {
+				metrics.HighPriorityUnsatisfied.Inc()
+			}
 			continue
 		}
 
@@ -158,6 +182,10 @@ func allocateWithConstraints(requests []models.CustomerRequirement, capacity int
 			// Full allocation
 			allocated = append(allocated, req)
 			remaining -= req.AgentsNeeded
+			// Track high priority success
+			if req.Priority == 1 {
+				metrics.HighPriorityFullySatisfied.Inc()
+			}
 		} else {
 			// Partial allocation - give what's left
 			allocated = append(allocated, models.CustomerRequirement{
@@ -173,6 +201,10 @@ func allocateWithConstraints(requests []models.CustomerRequirement, capacity int
 				UnmetAgents:     req.AgentsNeeded - remaining,
 				Priority:        req.Priority,
 			})
+			// Track high priority partial satisfaction
+			if req.Priority == 1 {
+				metrics.HighPriorityPartiallySatisfied.Inc()
+			}
 			remaining = 0
 		}
 	}
@@ -187,4 +219,39 @@ func allocateWithConstraints(requests []models.CustomerRequirement, capacity int
 		}
 	}
 	return allocated, nil
+}
+
+// computeScheduleMetrics computes aggregate metrics from the final schedule.
+// This should be called after schedule generation is complete.
+func computeScheduleMetrics(schedule *models.Schedule) {
+	var totalDemanded, totalAllocated, totalUnmet float64
+
+	// Sum up all hourly requirements (this is what was allocated)
+	for _, reqs := range schedule.HourlyRequirements {
+		for _, req := range reqs {
+			totalAllocated += float64(req.AgentsNeeded)
+		}
+	}
+
+	// Process unmet demands
+	metrics.HoursWithUnmetDemand.Set(float64(len(schedule.UnmetDemands)))
+
+	for _, unmet := range schedule.UnmetDemands {
+		totalDemanded += float64(unmet.TotalDemand)
+		totalUnmet += float64(unmet.UnmetAgents)
+
+		// Track unmet demand by priority
+		for _, client := range unmet.ImpactedClients {
+			priorityLabel := fmt.Sprintf("%d", client.Priority)
+			metrics.UnmetDemandByPriority.WithLabelValues(priorityLabel).Add(float64(client.UnmetAgents))
+		}
+	}
+
+	// For hours without unmet demand, the demand equals the allocation
+	// So total demanded = total allocated + total unmet
+	totalDemanded += totalAllocated
+
+	metrics.AgentsDemandedTotal.Set(totalDemanded)
+	metrics.AgentsAllocatedTotal.Set(totalAllocated)
+	metrics.AgentsUnmetTotal.Set(totalUnmet)
 }

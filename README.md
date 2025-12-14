@@ -14,6 +14,7 @@ Agent Scheduler is a Go-based application designed to calculate and schedule age
 -   **Utilization Adjustments**: Supports a utilization multiplier (0-1) to adjust agent requirements based on expected efficiency.
 -   **Multi-Timezone Support**: Handles input times in various timezones (e.g., "America/New_York", "Asia/Tokyo") and normalizes them for scheduling. If timezone parsing fails, it falls back to Pacific Time.
 -   **Multiple Output Formats**: Generates schedules in Text, JSON, or CSV formats.
+-   **Observability**: Built-in Prometheus metrics for business and operational monitoring (latency, error rates, capacity planning).
 
 ## Scheduling Logic
 
@@ -60,12 +61,41 @@ Run the scheduler:
 -   `-format`: Output format: `text`, `json`, or `csv` (Default: `text`).
 -   `-utilization`: Utilization multiplier between 0 and 1 (Default: `1.0`).
 -   `-capacity`: Maximum agent capacity per hour (0 = unlimited).
+-   `-metrics-addr`: Address to expose Prometheus metrics, e.g., `:9090` (Optional).
+-   `-push-url`: URL of Prometheus Pushgateway to push metrics to (Optional).
+-   `-wait`: Keep process running after completion to allow for metric scraping (Optional).
 
 ### Example
 
 ```bash
 ./agent-scheduler -input testdata/data.csv -format csv -capacity 50
 ```
+
+## Metrics & Observability
+
+The application exposes Prometheus-compatible metrics for monitoring scheduling performance and capacity planning.
+
+### Viewing Metrics Locally
+To run the scheduler and view metrics locally before the process exits:
+```bash
+./agent-scheduler -input testdata/data.csv -metrics-addr :9090 -wait
+```
+Then visit `http://localhost:9090/metrics` in your browser.
+
+### Pushing to Pushgateway
+For automated workflows, push metrics to a Prometheus Pushgateway:
+```bash
+./agent-scheduler -input testdata/data.csv -push-url http://pushgateway:9091
+```
+
+### Key Metrics
+- **Business**:
+  - `scheduler_agents_unmet_total`: Total unmet demand (Capacity planning).
+  - `scheduler_high_priority_unsatisfied_total`: Priority-1 requests that received 0 agents.
+  - `scheduler_hours_with_unmet_demand`: Number of hours where capacity was exceeded.
+- **Operational**:
+  - `parser_errors_total`: CSV parse errors by type.
+  - `scheduler_duration_seconds`: Time taken to generate the schedule.
 
 ## Input Format
 

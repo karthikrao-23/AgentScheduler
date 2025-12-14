@@ -2,6 +2,7 @@ package parser
 
 import (
 	"agent-scheduler/errors"
+	"agent-scheduler/metrics"
 	"agent-scheduler/models"
 	"encoding/csv"
 	"fmt"
@@ -21,6 +22,12 @@ import (
 // for all subsequent rows until the next timezone header is encountered.
 // Defaults to Pacific Time if not specified.
 func Parse(r io.Reader) ([]models.CallData, error) {
+	// Track parse duration
+	start := time.Now()
+	defer func() {
+		metrics.ParserDurationSeconds.Observe(time.Since(start).Seconds())
+	}()
+
 	reader := csv.NewReader(r)
 	reader.TrimLeadingSpace = true
 	reader.FieldsPerRecord = -1
@@ -28,6 +35,7 @@ func Parse(r io.Reader) ([]models.CallData, error) {
 	// Set default location to Pacific Time
 	loc, err := time.LoadLocation("America/Los_Angeles")
 	if err != nil {
+		metrics.ParserErrorsTotal.WithLabelValues("location_load").Inc()
 		return nil, fmt.Errorf("error loading location: %w", err)
 	}
 	var data []models.CallData
@@ -40,6 +48,7 @@ func Parse(r io.Reader) ([]models.CallData, error) {
 			break
 		}
 		if err != nil {
+			metrics.ParserErrorsTotal.WithLabelValues("csv_read").Inc()
 			return nil, fmt.Errorf("error reading CSV at line %d: %w", lineNum, err)
 		}
 
@@ -62,6 +71,7 @@ func Parse(r io.Reader) ([]models.CallData, error) {
 		}
 
 		if len(record) != 6 {
+			metrics.ParserErrorsTotal.WithLabelValues("invalid_field_count").Inc()
 			return nil, &errors.ParseError{
 				Line:   lineNum,
 				Record: record,
@@ -75,6 +85,7 @@ func Parse(r io.Reader) ([]models.CallData, error) {
 
 		cd.AverageCallDurationSeconds, err = strconv.Atoi(strings.TrimSpace(record[1]))
 		if err != nil {
+			metrics.ParserErrorsTotal.WithLabelValues("invalid_duration").Inc()
 			return nil, &errors.ParseError{
 				Line:   lineNum,
 				Record: record,
@@ -89,6 +100,7 @@ func Parse(r io.Reader) ([]models.CallData, error) {
 
 		cd.StartTime, parseErr = parseTime(strings.TrimSpace(record[2]), layouts, loc)
 		if parseErr != nil {
+			metrics.ParserErrorsTotal.WithLabelValues("invalid_start_time").Inc()
 			return nil, &errors.ParseError{
 				Line:   lineNum,
 				Record: record,
@@ -98,6 +110,7 @@ func Parse(r io.Reader) ([]models.CallData, error) {
 
 		cd.EndTime, parseErr = parseTime(strings.TrimSpace(record[3]), layouts, loc)
 		if parseErr != nil {
+			metrics.ParserErrorsTotal.WithLabelValues("invalid_end_time").Inc()
 			return nil, &errors.ParseError{
 				Line:   lineNum,
 				Record: record,
@@ -107,6 +120,7 @@ func Parse(r io.Reader) ([]models.CallData, error) {
 
 		cd.NumberOfCalls, err = strconv.Atoi(strings.TrimSpace(record[4]))
 		if err != nil {
+			metrics.ParserErrorsTotal.WithLabelValues("invalid_number_of_calls").Inc()
 			return nil, &errors.ParseError{
 				Line:   lineNum,
 				Record: record,
@@ -116,6 +130,7 @@ func Parse(r io.Reader) ([]models.CallData, error) {
 
 		cd.Priority, err = strconv.Atoi(strings.TrimSpace(record[5]))
 		if err != nil {
+			metrics.ParserErrorsTotal.WithLabelValues("invalid_priority").Inc()
 			return nil, &errors.ParseError{
 				Line:   lineNum,
 				Record: record,
@@ -124,6 +139,7 @@ func Parse(r io.Reader) ([]models.CallData, error) {
 		}
 
 		data = append(data, cd)
+		metrics.ParserRecordsTotal.Inc()
 	}
 
 	return data, nil
