@@ -9,7 +9,7 @@ Agent Scheduler is a Go-based application designed to calculate and schedule age
     -   **Proportional Allocation**: Correctly handles partial hours (e.g., a shift starting at 9:30 AM) by allocating agents proportional to the time worked in that hour.
 -   **Capacity Management**:
     -   **Capacity Constraints**: Supports a maximum global capacity per hour.
-    -   **Priority-Based Allocation**: When demand exceeds capacity, agents are allocated to higher-priority customers first.
+    -   **Priority-Based Allocation**: When demand exceeds capacity, agents are allocated to higher-priority customers first. Ties in priority are broken deterministically by Customer Name (A-Z).
     -   **Unmet Demand Tracking**: Detailed reporting of unmet demand and impacted clients when capacity is limited.
 -   **Utilization Adjustments**: Supports a utilization multiplier (0-1) to adjust agent requirements based on expected efficiency.
 -   **Multi-Timezone Support**: Handles input times in various timezones (e.g., "America/New_York", "Asia/Tokyo") and normalizes them for scheduling. If timezone parsing fails, it falls back to Pacific Time.
@@ -71,32 +71,6 @@ Run the scheduler:
 ./agent-scheduler -input testdata/data.csv -format csv -capacity 50
 ```
 
-## Metrics & Observability
-
-The application exposes Prometheus-compatible metrics for monitoring scheduling performance and capacity planning.
-
-### Viewing Metrics Locally
-To run the scheduler and view metrics locally before the process exits:
-```bash
-./agent-scheduler -input testdata/data.csv -metrics-addr :9090 -wait
-```
-Then visit `http://localhost:9090/metrics` in your browser.
-
-### Pushing to Pushgateway
-For automated workflows, push metrics to a Prometheus Pushgateway:
-```bash
-./agent-scheduler -input testdata/data.csv -push-url http://pushgateway:9091
-```
-
-### Key Metrics
-- **Business**:
-  - `scheduler_agents_unmet_total`: Total unmet demand (Capacity planning).
-  - `scheduler_high_priority_unsatisfied_total`: Priority-1 requests that received 0 agents.
-  - `scheduler_hours_with_unmet_demand`: Number of hours where capacity was exceeded.
-- **Operational**:
-  - `parser_errors_total`: CSV parse errors by type.
-  - `scheduler_duration_seconds`: Time taken to generate the schedule.
-
 ## Input Format
 
 The input CSV file should have the following columns (headers are optional if using the parser that skips them, but standard format is recommended):
@@ -132,3 +106,23 @@ Human-readable hourly breakdown:
 
 ### JSON
 Detailed JSON structure for programmatic consumption.
+
+## Metrics & Observability
+
+The application exposes Prometheus-compatible metrics for monitoring scheduling performance and capacity planning.
+
+### Viewing Metrics Locally
+To run the scheduler and view metrics locally before the process exits:
+```bash
+./agent-scheduler -input testdata/data.csv -metrics-addr :9090 -wait
+```
+Then visit `http://localhost:9090/metrics` in your browser.
+
+### Key Metrics
+- **Business**:
+  - `scheduler_agents_unmet_total`: Total unmet demand (Capacity planning).
+  - `scheduler_high_priority_unsatisfied_total`: Priority-1 requests that received 0 agents.
+  - `scheduler_hours_with_unmet_demand`: Number of hours where capacity was exceeded.
+- **Operational**:
+  - `parser_errors_total`: CSV parse errors by type.
+  - `scheduler_duration_seconds`: Time taken to generate the schedule.

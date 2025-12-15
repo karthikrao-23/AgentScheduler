@@ -126,44 +126,47 @@ func GenerateSchedule(data []models.CallData, utilization float64, capacityPerHo
 }
 
 // allocateWithConstraints performs priority-based allocation.
-// Time: O(n log n) for sort + O(n) for allocation = O(n log n)
-// Space: O(n) for output slices (no extra map overhead)
 func allocateWithConstraints(requests []models.CustomerRequirement, capacity int) ([]models.CustomerRequirement, *models.UnmetDemand) {
 	if len(requests) == 0 {
 		return nil, nil
 	}
 
-	// Calculate total demand: O(n)
 	totalDemand := 0
 	for _, req := range requests {
 		totalDemand += req.AgentsNeeded
 	}
 
-	// Fast path: if capacity exceeds demand, no allocation logic needed
 	if capacity >= totalDemand {
-		// Track high priority satisfaction for requests that are fully met
 		for _, req := range requests {
 			if req.Priority == 1 {
 				metrics.HighPriorityFullySatisfied.Inc()
 			}
 		}
+		// Sort by priority (1 = highest): O(n log n)
+		// If priorities are equal, sort alphabetically by Name for determinism
+		sort.Slice(requests, func(i, j int) bool {
+			if requests[i].Priority != requests[j].Priority {
+				return requests[i].Priority < requests[j].Priority
+			}
+			return requests[i].Name < requests[j].Name
+		})
 		return requests, nil
 	}
 
 	// Sort by priority (1 = highest): O(n log n)
+	// If priorities are equal, sort alphabetically by Name for determinism
 	sort.Slice(requests, func(i, j int) bool {
-		return requests[i].Priority < requests[j].Priority
+		if requests[i].Priority != requests[j].Priority {
+			return requests[i].Priority < requests[j].Priority
+		}
+		return requests[i].Name < requests[j].Name
 	})
-
-	// Pre-allocate with capacity hints to reduce reallocations
 	allocated := make([]models.CustomerRequirement, 0, len(requests))
 	impactedClients := make([]models.ImpactedClient, 0)
 	remaining := capacity
 
-	// Single pass allocation: O(n)
 	for _, req := range requests {
 		if remaining <= 0 {
-			// No capacity left - fully unmet
 			impactedClients = append(impactedClients, models.ImpactedClient{
 				Name:            req.Name,
 				RequestedAgents: req.AgentsNeeded,

@@ -11,7 +11,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/client_golang/prometheus/push"
@@ -106,9 +105,5 @@ func main() {
 		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 		<-c
 		fmt.Println("\nExiting...")
-	} else if *metricsAddr != "" && *pushGateway == "" {
-		// Small delay to allow final scrape if not waiting explicitly
-		// but typically batch jobs should use pushgateway or wait
-		time.Sleep(100 * time.Millisecond)
 	}
 }

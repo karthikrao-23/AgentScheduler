@@ -8,7 +8,7 @@ build:
 INPUT ?= testdata/data.csv
 
 run: build
-	./$(APP_NAME) -input $(INPUT) -format text
+	./$(APP_NAME) -input $(INPUT) -format text -metrics-addr :8081 -wait
 
 test:
 	go test ./... -v

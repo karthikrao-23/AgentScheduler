@@ -58,6 +58,7 @@ How do we convert "100 calls from 9:30 to 11:00" into hourly needs?
 #### 3.2.2 Priority-Aware Smoothing (Bin Packing)
 When `Total Demand > Capacity`, how do we decide who gets staff?
 1.  **Sort**: Sort all requests for a given hour by Priority (1 = Highest).
+    -   *Tie-Breaker*: If priorities are equal, sort alphabetically by Customer Name to ensure deterministic scheduling.
 2.  **Pass 1 (Full Fill)**: Iterate top-down. If `Remaining Capacity >= Request`, fully satisfy it.
 3.  **Pass 2 (Partial Fill)**: If `Remaining Capacity > 0` but less than request, give the remainder to the next highest priority client.
 4.  **Record Unmet**: Track exactly which clients lost coverage for reporting.
@@ -87,10 +88,7 @@ We utilize a **Custom Prometheus Registry** to expose business-critical data wit
 | `scheduler_high_priority_unsatisfied_total` | **Critical**. Counts times a VIP client got 0 agents. |
 | `parser_errors_total` | **Operational**. Indicates bad input data quality. |
 
-## 5. Extensibility
-
--   **New Input Sources**: The `Parser` interface accepts an `io.Reader`, allowing easy extension to read from APIs or databases instead of just CSV files.
--   **New Constraints**: The `allocateWithConstraints` function is isolated, making it easy to plug in different optimization strategies (e.g., Fair Share instead of Strict Priority) if business needs change.
-
-## 6. Future Enhancements
+## 5. Future Enhancements
 -   **Shift Optimization**: Currently generates requirements per hour. Future versions could group these into 8-hour shifts.
+-   **Capacity Management**: Future versions could support dynamic capacity changes, allowing for more flexible staffing models.
+-   **UI/UX**: Future versions could support a web-based UI for visualizing the schedule and capacity planning.
