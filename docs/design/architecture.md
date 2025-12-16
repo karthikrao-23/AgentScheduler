@@ -63,6 +63,10 @@ When `Total Demand > Capacity`, how do we decide who gets staff?
 3.  **Pass 2 (Partial Fill)**: If `Remaining Capacity > 0` but less than request, give the remainder to the next highest priority client.
 4.  **Record Unmet**: Track exactly which clients lost coverage for reporting.
 
+> **Note on Capacity Definition**:
+> In this system, "Capacity" refers to **Per-Hour Concurrent Headcount** (e.g., "500 seats available in the call center").
+> It does *not* refer to "Total Daily Agent-Hours" (Budget). The constraint is applied independently to each hour slot.
+
 ### 3.3 Data Structures
 
 **`CallData` (Input)**
